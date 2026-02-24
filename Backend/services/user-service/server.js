@@ -22,18 +22,25 @@ app.get("/", (req, res) => {
 });
 
 app.post("/register", async (req, res) => {
-    const hashed = await bcrypt.hash(req.body.password, 10);
-    const user = await User.create({ ...req.body, password: hashed });
-    res.json(user);
+    try {
+        const hashed = await bcrypt.hash(req.body.password, 10);
+        const user = await User.create({ ...req.body, password: hashed });
+        res.json(user);
+    } catch (err) {
+        if (err.code === 11000) {
+            return res.status(400).json({ message: "Email already registered" });
+        }
+        res.status(500).json({ message: "Registration failed" });
+    }
 });
 
 app.post("/login", async (req, res) => {
     const user = await User.findOne({ email: req.body.email });
-    if (!user) return res.status(400).json({ msg: "User not found" });
+    if (!user) return res.status(400).json({ message: "User not found" });
     const valid = await bcrypt.compare(req.body.password, user.password);
-    if (!valid) return res.status(400).json({ msg: "Invalid password" });
+    if (!valid) return res.status(400).json({ message: "Incorrect password" });
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.json({ token });
+    res.json({ token, user: { name: user.name, email: user.email, role: user.role } });
 });
 
 app.listen(process.env.PORT, () => {

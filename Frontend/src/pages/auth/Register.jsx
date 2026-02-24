@@ -1,25 +1,22 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { registerUser } from '../../api/services';
+import { toast } from 'react-toastify';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
     try {
       await registerUser(form);
-      setSuccess('Registration successful! Redirecting to login...');
+      toast.success('Registration successful! Redirecting to login...');
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      toast.error(err.response?.data?.message || 'Registration failed');
     }
   };
 
@@ -27,8 +24,6 @@ export default function Register() {
     <div className="auth-wrapper">
       <form className="auth-card" onSubmit={handleSubmit}>
         <h2>Register</h2>
-        {error && <div className="error-msg">{error}</div>}
-        {success && <div className="error-msg" style={{ background: '#e8f5e9', color: '#27ae60' }}>{success}</div>}
         <div className="form-group">
           <label>Name</label>
           <input name="name" required value={form.name} onChange={handleChange} />

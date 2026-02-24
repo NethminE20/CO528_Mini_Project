@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getNotifications, createNotification } from '../../api/notifications';
+import { toast } from 'react-toastify';
 
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -26,11 +27,12 @@ export default function Notifications() {
     e.preventDefault();
     try {
       await createNotification(form);
+      toast.success('Notification sent!');
       setForm({ title: '', message: '' });
       setShowForm(false);
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('Failed to send notification');
     }
   };
 

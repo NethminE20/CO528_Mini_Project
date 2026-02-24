@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getJobs, createJob, updateJob, deleteJob } from '../../api/services';
+import { toast } from 'react-toastify';
+import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
 
 export default function Jobs() {
   const [jobs, setJobs] = useState([]);
@@ -39,13 +41,15 @@ export default function Jobs() {
     try {
       if (editing) {
         await updateJob(editing._id, form);
+        toast.success('Job updated successfully');
       } else {
         await createJob(form);
+        toast.success('Job created successfully');
       }
       setShowModal(false);
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('Operation failed');
     }
   };
 
@@ -53,9 +57,10 @@ export default function Jobs() {
     if (!window.confirm('Delete this job?')) return;
     try {
       await deleteJob(id);
+      toast.success('Job deleted');
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('Delete failed');
     }
   };
 
@@ -63,7 +68,7 @@ export default function Jobs() {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Jobs</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ New Job</button>
+        <button className="btn btn-primary" onClick={openCreate}><FiPlus /> New Job</button>
       </div>
 
       <div className="card" style={{ marginTop: '1rem' }}>
@@ -83,8 +88,8 @@ export default function Jobs() {
                 <td>{j.company}</td>
                 <td>{j.description?.substring(0, 80)}…</td>
                 <td className="action-btns">
-                  <button className="btn btn-sm btn-primary" onClick={() => openEdit(j)}>Edit</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(j._id)}>Delete</button>
+                  <button className="btn btn-sm btn-outline-primary" onClick={() => openEdit(j)} title="Edit"><FiEdit2 /> Edit</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(j._id)} title="Delete"><FiTrash2 /> Delete</button>
                 </td>
               </tr>
             ))}

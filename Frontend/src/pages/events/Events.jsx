@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getEvents, createEvent, updateEvent, deleteEvent, rsvpEvent } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
+import { FiEdit2, FiTrash2, FiPlus, FiCheckCircle } from 'react-icons/fi';
 
 export default function Events() {
   const { user } = useAuth();
@@ -41,13 +43,15 @@ export default function Events() {
     try {
       if (editing) {
         await updateEvent(editing._id, form);
+        toast.success('Event updated successfully');
       } else {
         await createEvent(form);
+        toast.success('Event created successfully');
       }
       setShowModal(false);
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('Operation failed');
     }
   };
 
@@ -55,18 +59,20 @@ export default function Events() {
     if (!window.confirm('Delete this event?')) return;
     try {
       await deleteEvent(id);
+      toast.success('Event deleted');
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('Delete failed');
     }
   };
 
   const handleRsvp = async (id) => {
     try {
       await rsvpEvent(id, { userId: user?.email || 'anonymous' });
+      toast.success('RSVP confirmed!');
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('RSVP failed');
     }
   };
 
@@ -74,7 +80,7 @@ export default function Events() {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Events</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ New Event</button>
+        <button className="btn btn-primary" onClick={openCreate}><FiPlus /> New Event</button>
       </div>
 
       <div className="card" style={{ marginTop: '1rem' }}>
@@ -94,9 +100,9 @@ export default function Events() {
                 <td>{ev.date ? new Date(ev.date).toLocaleDateString() : '—'}</td>
                 <td>{ev.rsvps?.length ?? 0}</td>
                 <td className="action-btns">
-                  <button className="btn btn-sm btn-success" onClick={() => handleRsvp(ev._id)}>RSVP</button>
-                  <button className="btn btn-sm btn-primary" onClick={() => openEdit(ev)}>Edit</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(ev._id)}>Delete</button>
+                  <button className="btn btn-sm btn-outline-success" onClick={() => handleRsvp(ev._id)} title="RSVP"><FiCheckCircle /> RSVP</button>
+                  <button className="btn btn-sm btn-outline-primary" onClick={() => openEdit(ev)} title="Edit"><FiEdit2 /> Edit</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(ev._id)} title="Delete"><FiTrash2 /> Delete</button>
                 </td>
               </tr>
             ))}

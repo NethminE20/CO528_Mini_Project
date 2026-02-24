@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { getPosts, createPost, updatePost, deletePost } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
+import { FiEdit2, FiTrash2, FiPlus } from 'react-icons/fi';
 
 export default function Posts() {
   const { user } = useAuth();
@@ -39,13 +41,15 @@ export default function Posts() {
     try {
       if (editing) {
         await updatePost(editing._id, form);
+        toast.success('Post updated successfully');
       } else {
         await createPost({ ...form, userId: user?.email || 'anonymous' });
+        toast.success('Post created successfully');
       }
       setShowModal(false);
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('Operation failed');
     }
   };
 
@@ -53,9 +57,10 @@ export default function Posts() {
     if (!window.confirm('Delete this post?')) return;
     try {
       await deletePost(id);
+      toast.success('Post deleted');
       fetchData();
     } catch {
-      /* ignore */
+      toast.error('Delete failed');
     }
   };
 
@@ -63,7 +68,7 @@ export default function Posts() {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h1>Posts</h1>
-        <button className="btn btn-primary" onClick={openCreate}>+ New Post</button>
+        <button className="btn btn-primary" onClick={openCreate}><FiPlus /> New Post</button>
       </div>
 
       <div className="card" style={{ marginTop: '1rem' }}>
@@ -83,8 +88,8 @@ export default function Posts() {
                 <td>{p.userId}</td>
                 <td>{p.likes ?? 0}</td>
                 <td className="action-btns">
-                  <button className="btn btn-sm btn-primary" onClick={() => openEdit(p)}>Edit</button>
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p._id)}>Delete</button>
+                  <button className="btn btn-sm btn-outline-primary" onClick={() => openEdit(p)} title="Edit"><FiEdit2 /> Edit</button>
+                  <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(p._id)} title="Delete"><FiTrash2 /> Delete</button>
                 </td>
               </tr>
             ))}
