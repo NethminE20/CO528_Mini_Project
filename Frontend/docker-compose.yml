@@ -1,45 +1,18 @@
-version: "3.8"
+
 
 services:
   frontend:
     build:
       context: .
       args:
-        VITE_API_BASE_URL: http://api-gateway:5000
-        VITE_SOCKET_URL: http://messaging-service:5005
-        VITE_NOTIFICATION_URL: http://notification-service:5006
+        VITE_API_BASE_URL: http://localhost:5000
+        VITE_SOCKET_URL: http://localhost:5005
+        VITE_NOTIFICATION_URL: http://localhost:5006
     ports:
       - "3000:80"
-    depends_on:
-      - api-gateway
     networks:
       - decp-network
 
-  # Assumes these backend services already exist or are defined elsewhere.
-  # Uncomment and adjust if you want to include them in this compose file.
-  #
-  # api-gateway:
-  #   image: decp/api-gateway
-  #   ports:
-  #     - "5000:5000"
-  #   networks:
-  #     - decp-network
-  #
-  # messaging-service:
-  #   image: decp/messaging-service
-  #   ports:
-  #     - "5005:5005"
-  #   networks:
-  #     - decp-network
-  #
-  # notification-service:
-  #   image: decp/notification-service
-  #   ports:
-  #     - "5006:5006"
-  #   networks:
-  #     - decp-network
-
 networks:
   decp-network:
-    external: true
     name: decp-network

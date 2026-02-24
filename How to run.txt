@@ -1,0 +1,5 @@
+cd Backend
+docker compose up --build api-gateway  
+
+cd Frontend
+docker compose up --build

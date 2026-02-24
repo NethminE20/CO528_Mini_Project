@@ -22,4 +22,16 @@ app.get("/", async (req, res) => {
     res.json(await Post.find());
 });
 
+app.put("/:id", async (req, res) => {
+    const post = await Post.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!post) return res.status(404).json({ msg: "Post not found" });
+    res.json(post);
+});
+
+app.delete("/:id", async (req, res) => {
+    const post = await Post.findByIdAndDelete(req.params.id);
+    if (!post) return res.status(404).json({ msg: "Post not found" });
+    res.json({ msg: "Post deleted" });
+});
+
 app.listen(process.env.PORT);

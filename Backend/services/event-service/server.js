@@ -29,4 +29,16 @@ app.get("/", async (req, res) => {
     res.json(await Event.find());
 });
 
+app.put("/:id", async (req, res) => {
+    const event = await Event.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!event) return res.status(404).json({ msg: "Event not found" });
+    res.json(event);
+});
+
+app.delete("/:id", async (req, res) => {
+    const event = await Event.findByIdAndDelete(req.params.id);
+    if (!event) return res.status(404).json({ msg: "Event not found" });
+    res.json({ msg: "Event deleted" });
+});
+
 app.listen(process.env.PORT || 5004);
