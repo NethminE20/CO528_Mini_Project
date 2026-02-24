@@ -1,0 +1,336 @@
+openapi: 3.0.1
+info:
+  title: DECP Platform API
+  version: 1.0.0
+  description: Complete API documentation for DECP Microservices Platform
+
+servers:
+  - url: http://localhost:5000
+    description: API Gateway
+
+paths:
+  /:
+    get:
+      summary: API Gateway Root
+      responses:
+        "200":
+          description: Gateway running message
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /health:
+    get:
+      summary: API Health Check
+      responses:
+        "200":
+          description: Service health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  ######################
+  # USER SERVICE
+  ######################
+
+  /users/:
+    get:
+      summary: Check User Service
+      responses:
+        "200":
+          description: User service running
+
+  /users/register:
+    post:
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUser"
+      responses:
+        "200":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginUser"
+      responses:
+        "200":
+          description: JWT token returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+
+  ######################
+  # POST SERVICE
+  ######################
+
+  /posts:
+    get:
+      summary: Get all posts
+      responses:
+        "200":
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Post"
+
+    post:
+      summary: Create new post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePost"
+      responses:
+        "200":
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+
+  ######################
+  # JOB SERVICE
+  ######################
+
+  /jobs:
+    get:
+      summary: Get all jobs
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Job"
+
+    post:
+      summary: Create new job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJob"
+      responses:
+        "200":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  ######################
+  # EVENT SERVICE
+  ######################
+
+  /events:
+    get:
+      summary: Get all events
+      responses:
+        "200":
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+
+    post:
+      summary: Create new event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvent"
+      responses:
+        "200":
+          description: Event created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{id}/rsvp:
+    post:
+      summary: RSVP to an event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RSVP"
+      responses:
+        "200":
+          description: RSVP added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  ######################
+  # ANALYTICS SERVICE
+  ######################
+
+  /analytics:
+    get:
+      summary: Get post analytics
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalPosts:
+                    type: integer
+                  totalLikes:
+                    type: integer
+
+components:
+  schemas:
+    RegisterUser:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [student, alumni, admin]
+
+    LoginUser:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+
+    CreatePost:
+      type: object
+      required: [userId, content]
+      properties:
+        userId:
+          type: string
+        content:
+          type: string
+
+    Post:
+      type: object
+      properties:
+        _id:
+          type: string
+        userId:
+          type: string
+        content:
+          type: string
+        likes:
+          type: integer
+
+    CreateJob:
+      type: object
+      required: [title, description, company]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        company:
+          type: string
+
+    Job:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        company:
+          type: string
+
+    CreateEvent:
+      type: object
+      required: [title, date]
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+
+    Event:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        date:
+          type: string
+        rsvps:
+          type: array
+          items:
+            type: string
+
+    RSVP:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
