@@ -1,0 +1,11 @@
+First you should install Docker Desktop
+Then
+run below code on terminal
+  docker-compose up --build
+
+If build is failed. 
+After configurations 
+First you need to run
+  docker-compose down
+Then
+  docker-compose up --build
