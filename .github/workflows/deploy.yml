@@ -6,15 +6,16 @@ on:
       - main
 
 jobs:
-  deploy:
-    name: Deploy to Lightsail
-    runs-on: ubuntu-latest
 
+  # ─── Stage 1: Upload source code ───
+  upload:
+    name: Upload to Lightsail
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy files to Lightsail via SSH
+      - name: Copy files to Lightsail
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
@@ -22,26 +23,101 @@ jobs:
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           source: "Backend/,Frontend/,nginx/,docker-compose.prod.yml"
           target: /home/ec2-user/app
+          overwrite: true
 
-      - name: Deploy via SSH
+  # ─── Stage 2: Build backend images ───
+  build-backend:
+    name: Build Backend
+    needs: upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build backend services via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.LIGHTSAIL_HOST }}
           username: ec2-user
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            cd /home/ec2-user/app
+            echo "=== Building backend services ==="
+
+            docker compose -f docker-compose.prod.yml build \
+              mongo \
+              user-service \
+              post-service \
+              job-service \
+              event-service \
+              messaging-service \
+              notification-service \
+              analytics-service \
+              api-gateway
+
+            echo "=== Backend build complete ==="
+
+  # ─── Stage 3: Build frontend image ───
+  build-frontend:
+    name: Build Frontend
+    needs: upload
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build frontend via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ec2-user
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          command_timeout: 30m
+          script: |
+            cd /home/ec2-user/app
+            echo "=== Building frontend ==="
+
+            docker compose -f docker-compose.prod.yml build frontend
+
+            echo "=== Frontend build complete ==="
+
+  # ─── Stage 4: Deploy all services ───
+  deploy:
+    name: Deploy
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy services via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ec2-user
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          command_timeout: 10m
           script: |
             cd /home/ec2-user/app
 
-            # Export env vars from .env file for docker compose
-            set -a
-            source .env
-            set +a
+            # Load .env if it exists (for JWT_SECRET etc)
+            if [ -f .env ]; then
+              set -a
+              source .env
+              set +a
+              echo "=== Loaded .env ==="
+            else
+              echo "WARNING: No .env file found at /home/ec2-user/app/.env"
+              echo "Creating default .env..."
+              echo "JWT_SECRET=change-me-$(openssl rand -hex 16)" > .env
+              set -a
+              source .env
+              set +a
+              echo "=== Created default .env — CHANGE JWT_SECRET! ==="
+            fi
 
-            # Pull latest images and rebuild
+            echo "=== Stopping old containers ==="
             docker compose -f docker-compose.prod.yml down
-            docker compose -f docker-compose.prod.yml up -d --build
 
-            # Clean up old images
+            echo "=== Starting all services ==="
+            docker compose -f docker-compose.prod.yml up -d
+
+            echo "=== Cleaning up old images ==="
             docker image prune -f
 
-            echo "Deployment complete!"
+            echo "=== Deployment complete ==="
+            echo ""
+            echo "=== Container status ==="
+            docker compose -f docker-compose.prod.yml ps
