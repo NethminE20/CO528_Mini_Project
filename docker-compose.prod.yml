@@ -1,0 +1,135 @@
+services:
+
+  mongo:
+    image: mongo:6
+    container_name: decp-mongo
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - decp-network
+
+  api-gateway:
+    build: ./Backend/api-gateway
+    container_name: decp-gateway
+    restart: always
+    depends_on:
+      - user-service
+      - post-service
+      - job-service
+      - event-service
+      - analytics-service
+      - messaging-service
+      - notification-service
+    networks:
+      - decp-network
+
+  user-service:
+    build: ./Backend/services/user-service
+    container_name: decp-user
+    restart: always
+    environment:
+      - PORT=5001
+      - MONGO_URI=mongodb://mongo:27017/decp
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - mongo
+    networks:
+      - decp-network
+
+  post-service:
+    build: ./Backend/services/post-service
+    container_name: decp-post
+    restart: always
+    environment:
+      - PORT=5002
+      - MONGO_URI=mongodb://mongo:27017/decp
+    depends_on:
+      - mongo
+    networks:
+      - decp-network
+
+  job-service:
+    build: ./Backend/services/job-service
+    container_name: decp-job
+    restart: always
+    environment:
+      - PORT=5003
+      - MONGO_URI=mongodb://mongo:27017/decp
+    depends_on:
+      - mongo
+    networks:
+      - decp-network
+
+  event-service:
+    build: ./Backend/services/event-service
+    container_name: decp-event
+    restart: always
+    environment:
+      - PORT=5004
+      - MONGO_URI=mongodb://mongo:27017/decp
+    depends_on:
+      - mongo
+    networks:
+      - decp-network
+
+  messaging-service:
+    build: ./Backend/services/messaging-service
+    container_name: decp-messaging
+    restart: always
+    networks:
+      - decp-network
+
+  notification-service:
+    build: ./Backend/services/notification-service
+    container_name: decp-notification
+    restart: always
+    networks:
+      - decp-network
+
+  analytics-service:
+    build: ./Backend/services/analytics-service
+    container_name: decp-analytics
+    restart: always
+    environment:
+      - PORT=5007
+      - MONGO_URI=mongodb://mongo:27017/decp
+    depends_on:
+      - mongo
+    networks:
+      - decp-network
+
+  frontend:
+    build:
+      context: ./Frontend
+      args:
+        VITE_API_BASE_URL: http://54.254.253.88/api
+        VITE_SOCKET_URL: http://54.254.253.88
+        VITE_NOTIFICATION_URL: http://54.254.253.88/notifications
+    container_name: decp-frontend
+    restart: always
+    networks:
+      - decp-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: decp-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api-gateway
+      - frontend
+      - messaging-service
+      - notification-service
+    networks:
+      - decp-network
+
+volumes:
+  mongo-data:
+
+networks:
+  decp-network:
+    driver: bridge
